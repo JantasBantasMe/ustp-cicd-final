@@ -10,7 +10,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,47 +66,22 @@ jobs:
           echo "No recognized build file (package.json, pom.xml, build.gradle, Makefile)."
           exit 1
 
-      - name: Collect build artifacts
+      - name: Run Tests
         shell: bash
         run: |
-          set -e
-          ARTIFACT_DIR="$GITHUB_WORKSPACE/artifacts"
-          mkdir -p "$ARTIFACT_DIR"
-          found=0
-
-          # common web output dirs
-          for d in build dist out public; do
-            if [ -d "$d" ]; then
-              echo "Copying directory: $d"
-              cp -r "$d" "$ARTIFACT_DIR/$(basename $d)"
-              found=1
+          if [ -f package.json ]; then
+            if npm run | grep -q "test:run"; then
+              npx vitest run --coverage
             fi
-          done
-
-          # Maven JARs
-          if compgen -G "target/*.jar" > /dev/null; then
-            mkdir -p "$ARTIFACT_DIR/jars"
-            cp target/*.jar "$ARTIFACT_DIR/jars/" || true
-            found=1
           fi
 
-          # Gradle JARs
-          if compgen -G "build/libs/*.jar" > /dev/null; then
-            mkdir -p "$ARTIFACT_DIR/jars"
-            cp build/libs/*.jar "$ARTIFACT_DIR/jars/" || true
-            found=1
-          fi
-
-          if [ $found -eq 0 ]; then
-            echo "No known build outputs found. Workspace listing:"
-            ls -la
-            exit 1
-          fi
-
-          echo "Artifacts prepared in $ARTIFACT_DIR"
-
-      - name: Upload artifacts
+      - name: Upload test results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: web-application
-          path: artifacts/**
+          name: test-results-${{ matrix.os }}
+          path: |
+            test-results/
+            *.xml
+            *.json
+        continue-on-error: true
