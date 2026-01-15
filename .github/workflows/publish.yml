@@ -23,29 +23,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find latest successful Build run
+      - name: Find run that contains ubuntu artifact
         id: find-run
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs | sort_by(.created_at) | reverse | .[] | select(.name == "Build" and .conclusion == "success") | .id' | head -n1)
-          if [ -z "$RUN_ID" ]; then
-            echo "No successful Build run found."
-            exit 1
-          fi
-          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
-
-      - name: Debug list artifacts for found run
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          echo "Using run id: ${{ steps.find-run.outputs.run_id }}"
-          curl -s -H "Authorization: Bearer $GH_TOKEN" \
-            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/${{ steps.find-run.outputs.run_id }}/artifacts" \
-            | jq '.artifacts[] | {id:.id, name:.name, size:.size, expired:.expired}' || echo "No artifacts or jq failed"
+          TARGET_NAME="web-application-ubuntu-latest"
+          echo "Looking for artifact ${TARGET_NAME} in recent Build runs..."
+          # hole bis zu 100 Runs (neueste zuerst)
+          RUN_IDS=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs?per_page=100" \
+            | jq -r '.workflow_runs | sort_by(.created_at) | reverse | .[] | select(.name=="Build") | .id')
+          if [ -z "$RUN_IDS" ]; then
+            echo "No Build runs found."
+            exit 1
+          fi
+          for id in $RUN_IDS; do
+            echo "Checking run $id ..."
+            # prüfe Artefakte dieses Runs
+            ARTS_JSON=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts")
+            # debug: HTTP-body kurz zeigen, falls leer
+            if [ -z "$ARTS_JSON" ]; then
+              echo "Empty artifact response for run $id"
+              continue
+            fi
+            echo "$ARTS_JSON" | jq -r '.artifacts[]?.name' >/tmp/artnames 2>/dev/null || true
+            if [ -s /tmp/artnames ]; then
+              echo "Artifacts found in run $id:"
+              sed -n '1,50p' /tmp/artnames || true
+            else
+              echo "No artifacts listed for run $id"
+            fi
+            if echo "$ARTS_JSON" | jq -e --arg NAME "$TARGET_NAME" '.artifacts[]? | select(.name == $NAME)' >/dev/null; then
+              echo "Found $TARGET_NAME in run $id"
+              echo "run_id=$id" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          done
+          echo "No run contains artifact $TARGET_NAME" >&2
+          exit 1
 
-      - name: Download build artifacts
+      - name: Debug: show selected run
+        run: |
+          echo "Selected run: ${{ steps.find-run.outputs.run_id }}"
+
+      - name: Download the ubuntu artifact
         uses: actions/download-artifact@v4
         with:
           name: web-application-ubuntu-latest
