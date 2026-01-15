@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="19" failures="0" errors="0" time="0.0745801">
+    <testsuite name="src/components/GameBoard.test.tsx" timestamp="2026-01-15T16:06:05.531Z" hostname="Jan" tests="4" failures="0" errors="0" skipped="0" time="0.0533937">
+        <testcase classname="src/components/GameBoard.test.tsx" name="GameBoard Component &gt; should render canvas with correct dimensions" time="0.0271732">
+        </testcase>
+        <testcase classname="src/components/GameBoard.test.tsx" name="GameBoard Component &gt; should render game over overlay when gameOver is true" time="0.0020179">
+        </testcase>
+        <testcase classname="src/components/GameBoard.test.tsx" name="NextPiece Component &gt; should render next piece canvas" time="0.0193364">
+        </testcase>
+        <testcase classname="src/components/GameBoard.test.tsx" name="NextPiece Component &gt; should handle null nextPiece" time="0.0022785">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/tetris.test.ts" timestamp="2026-01-15T16:06:05.533Z" hostname="Jan" tests="15" failures="0" errors="0" skipped="0" time="0.0211864">
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; createEmptyBoard &gt; should create a board with correct dimensions" time="0.0026334">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; createEmptyBoard &gt; should create empty cells" time="0.0099151">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; getRandomTetromino &gt; should return a valid tetromino" time="0.0019671">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; rotateTetromino &gt; should rotate I piece correctly" time="0.0004566">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; rotateTetromino &gt; should rotate O piece (no change)" time="0.0002983">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; checkCollision &gt; should detect wall collision" time="0.0002882">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; checkCollision &gt; should detect floor collision" time="0.0001881">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; checkCollision &gt; should detect piece collision" time="0.0001863">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; checkCollision &gt; should not detect collision when clear" time="0.0002076">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; mergeTetromino &gt; should merge tetromino into board" time="0.0004416">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; clearLines &gt; should clear full lines" time="0.0006525">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; clearLines &gt; should not clear partial lines" time="0.0001875">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; calculateScore &gt; should calculate score correctly" time="0.0002675">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; calculateLevel &gt; should calculate level correctly" time="0.0002522">
+        </testcase>
+        <testcase classname="src/lib/tetris.test.ts" name="Tetris Logic &gt; getDropSpeed &gt; should calculate drop speed correctly" time="0.0001947">
+        </testcase>
+    </testsuite>
+</testsuites>
