@@ -23,14 +23,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Find latest build run
+      - name: Find latest successful Build run
         id: find-run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name == "Build" and .status == "completed") | .id' | head -1)
+          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs | sort_by(.created_at) | reverse | .[] | select(.name == "Build" and .conclusion == "success") | .id' | head -n1)
           if [ -z "$RUN_ID" ]; then
-            echo "No completed Build run found."
+            echo "No successful Build run found."
             exit 1
           fi
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
