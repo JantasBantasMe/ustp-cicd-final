@@ -2,6 +2,12 @@ name: Publish to GitHub Pages
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -15,32 +21,29 @@ concurrency:
 
 jobs:
   deploy:
+    # Only run if the Build workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Find latest successful build run
-        id: find-run
-        run: |
-          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name == "Build" and .status == "completed" and .conclusion == "success") | .id' | head -1)
-          echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
-
-      - name: Download build artifacts
+      - name: Download artifacts from Build workflow
         uses: actions/download-artifact@v4
         with:
           name: web-application-ubuntu-latest
-          run-id: ${{ steps.find-run.outputs.run-id }}
-          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          path: ./dist
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          folder: ./artifacts
