@@ -1,4 +1,4 @@
-name: Publish to GitHub Pages
+name: "Publish to GitHub Pages"
 
 on:
   workflow_dispatch:
@@ -20,10 +20,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
 
-      - name: Find run that contains ubuntu artifact
+      - name: "Find run that contains ubuntu artifact"
         id: find-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,7 +31,6 @@ jobs:
           set -euo pipefail
           TARGET_NAME="web-application-ubuntu-latest"
           echo "Looking for artifact ${TARGET_NAME} in recent Build runs..."
-          # hole bis zu 100 Runs (neueste zuerst)
           RUN_IDS=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs?per_page=100" \
             | jq -r '.workflow_runs | sort_by(.created_at) | reverse | .[] | select(.name=="Build") | .id')
           if [ -z "$RUN_IDS" ]; then
@@ -40,9 +39,7 @@ jobs:
           fi
           for id in $RUN_IDS; do
             echo "Checking run $id ..."
-            # prüfe Artefakte dieses Runs
             ARTS_JSON=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts")
-            # debug: HTTP-body kurz zeigen, falls leer
             if [ -z "$ARTS_JSON" ]; then
               echo "Empty artifact response for run $id"
               continue
@@ -63,21 +60,21 @@ jobs:
           echo "No run contains artifact $TARGET_NAME" >&2
           exit 1
 
-      - name: Debug: show selected run
+      - name: "Debug: show selected run"
         run: |
           echo "Selected run: ${{ steps.find-run.outputs.run_id }}"
 
-      - name: Download the ubuntu artifact
+      - name: "Download the ubuntu artifact"
         uses: actions/download-artifact@v4
         with:
           name: web-application-ubuntu-latest
           run-id: ${{ steps.find-run.outputs.run_id }}
           path: ./artifacts
 
-      - name: Setup Pages
+      - name: "Setup Pages"
         uses: actions/configure-pages@v5
 
-      - name: Deploy to GitHub Pages
+      - name: "Deploy to GitHub Pages"
         id: deployment
         uses: actions/deploy-pages@v4
         with:
