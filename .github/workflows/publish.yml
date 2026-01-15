@@ -15,6 +15,75 @@ concurrency:
 
 jobs:
   deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve Build workflow ID
+        id: resolve-workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Find the numeric workflow ID for .github/workflows/build.yml
+          WORKFLOW_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/workflows --jq '.workflows[] | select(.path == ".github/workflows/build.yml") | .id' | head -n1)
+          if [ -z "$WORKFLOW_ID" ]; then
+            echo "Could not resolve Build workflow ID"
+            exit 1
+          fi
+          echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_OUTPUT
+
+      - name: Find latest completed Build run
+        id: find-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          WORKFLOW_ID="${{ steps.resolve-workflow.outputs.workflow_id }}"
+          # Get most recent completed run for Build workflow
+          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW_ID/runs --jq '.workflow_runs | sort_by(.created_at) | reverse | .[] | select(.status == "completed") | .id' | head -n1)
+          if [ -z "$RUN_ID" ]; then
+            echo "No completed Build run found."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Download build artifacts (ubuntu)
+        uses: actions/download-artifact@v4
+        with:
+          name: web-application-ubuntu-latest
+          run-id: ${{ steps.find-run.outputs.run_id }}
+          path: ./artifacts
+
+      - name: List downloaded files
+        run: |
+          echo "Artifacts directory:" && ls -la ./artifacts || true
+          echo "Dist contents:" && ls -la ./artifacts/dist || true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          folder: ./artifacts/dist
+name: Publish to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
