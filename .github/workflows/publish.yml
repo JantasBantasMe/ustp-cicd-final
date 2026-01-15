@@ -1,7 +1,10 @@
 name: Publish to GitHub Pages
 
 on:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -11,6 +14,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
     steps:
@@ -19,6 +23,7 @@ jobs:
         with:
           name: web-application-ubuntu-latest
           path: ./artifact
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
