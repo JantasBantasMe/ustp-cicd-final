@@ -18,111 +18,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js (optional, speeds Node projects)
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Build / Test
-        shell: bash
-        run: |
-          set -e
-          # Node
-          if [ -f package.json ]; then
-            echo "Detected Node project"
-            npm ci
-            if npm run | grep -q "build"; then
-              npm run build
-            fi
-            exit 0
-          fi
+      - name: Install dependencies
+        run: npm ci
 
-          # Maven (Java)
-          if [ -f pom.xml ]; then
-            echo "Detected Maven project"
-            mvn -B package -DskipTests
-            exit 0
-          fi
+      - name: Build
+        run: npm run build
 
-          # Gradle (Java/Kotlin)
-          if [ -f build.gradle ] || [ -f build.gradle.kts ]; then
-            echo "Detected Gradle project"
-            ./gradlew build -x test --no-daemon
-            exit 0
-          fi
-
-          # Makefile
-          if [ -f Makefile ]; then
-            echo "Detected Makefile"
-            make build || make
-            exit 0
-          fi
-
-          echo "No recognized build file (package.json, pom.xml, build.gradle, Makefile)."
-          exit 1
-
-      - name: Run Tests
-        shell: bash
-        run: |
-          if [ -f package.json ]; then
-            if npm run | grep -q "test:run"; then
-              npx vitest run --coverage
-            fi
-          fi
+      - name: Run tests
+        run: npm run test:run
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.os }}
-          path: |
-            test-results/
-            *.xml
-            *.json
+          path: test-results/
         continue-on-error: true
 
-      - name: Collect build artifacts
-        shell: bash
-        run: |
-          set -e
-          ARTIFACT_DIR="$GITHUB_WORKSPACE/artifacts"
-          mkdir -p "$ARTIFACT_DIR"
-          found=0
-
-          # common web output dirs
-          for d in build dist out public; do
-            if [ -d "$d" ]; then
-              echo "Copying directory: $d"
-              cp -r "$d" "$ARTIFACT_DIR/$(basename $d)"
-              found=1
-            fi
-          done
-
-          # Maven JARs
-          if compgen -G "target/*.jar" > /dev/null; then
-            mkdir -p "$ARTIFACT_DIR/jars"
-            cp target/*.jar "$ARTIFACT_DIR/jars/" || true
-            found=1
-          fi
-
-          # Gradle JARs
-          if compgen -G "build/libs/*.jar" > /dev/null; then
-            mkdir -p "$ARTIFACT_DIR/jars"
-            cp build/libs/*.jar "$ARTIFACT_DIR/jars/" || true
-            found=1
-          fi
-
-          if [ $found -eq 0 ]; then
-            echo "No known build outputs found. Workspace listing:"
-            ls -la
-            exit 1
-          fi
-
-          echo "Artifacts prepared in $ARTIFACT_DIR"
-
-      - name: Upload artifacts
+      - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-application-${{ matrix.os }}
-          path: ${{ github.workspace }}/artifacts
+          path: dist/
