@@ -125,4 +125,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-application-${{ matrix.os }}
-          path: artifacts/**
+          path: ${{ github.workspace }}/artifacts
