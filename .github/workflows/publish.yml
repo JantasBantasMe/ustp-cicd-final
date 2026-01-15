@@ -1,4 +1,4 @@
-name: "Publish to GitHub Pages"
+name: Publish to GitHub Pages
 
 on:
   workflow_dispatch:
@@ -9,15 +9,8 @@ permissions:
   id-token: write
   actions: read
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
@@ -70,8 +63,24 @@ jobs:
         continue-on-error: true
         with:
           name: web-application-ubuntu-latest
-          run-id: ${{ steps.find-run.outputs.run_id }}
-          path: ./artifacts
+          path: ./dist
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+          curl -sL -H "Authorization: Bearer $GITHUB_TOKEN" -o /tmp/artifact.zip "$URL"
+          mkdir -p ./artifacts
+          unzip -q /tmp/artifact.zip -d ./artifacts || (echo "unzip failed" && ls -la /tmp && exit 1)
+          echo "Downloaded and extracted to ./artifacts"
+
+      - name: "List artifacts directory"
+        run: |
+          echo "Artifacts contents:" && ls -la ./artifacts || true
 
       - name: "If named download failed, try download-all fallback"
         if: steps.download-named.outcome != 'success'
