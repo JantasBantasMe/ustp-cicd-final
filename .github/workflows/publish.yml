@@ -25,8 +25,21 @@ jobs:
 
       - name: Find latest successful build run
         id: find-run
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+<<<<<<< HEAD
+          echo "Listing recent workflow runs:"
+          gh api repos/$GITHUB_REPOSITORY/actions/runs | jq '.workflow_runs[] | select(.name | contains("Build")) | {name, status, conclusion, id, created_at}' | head -5
+          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name | contains("Build") and .status == "completed") | .id' | head -1)
+          echo "Selected RUN_ID: $RUN_ID"
+          if [ -z "$RUN_ID" ]; then
+            echo "No completed Build run found."
+            exit 1
+          fi
+=======
           RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name == "Build" and .status == "completed" and .conclusion == "success") | .id' | head -1)
+>>>>>>> c7346a211cb2f58eb0c6a95e542359b6313c264f
           echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
 
       - name: Download build artifacts
