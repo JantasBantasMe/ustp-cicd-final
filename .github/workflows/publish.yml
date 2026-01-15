@@ -26,7 +26,14 @@ jobs:
       - name: Find latest successful build run
         id: find-run
         run: |
-          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name == "Build" and .status == "completed" and .conclusion == "success") | .id' | head -1)
+          echo "Listing recent workflow runs:"
+          gh api repos/$GITHUB_REPOSITORY/actions/runs | jq '.workflow_runs[] | select(.name == "Build") | {name, status, conclusion, id, created_at}' | head -5
+          RUN_ID=$(gh api repos/$GITHUB_REPOSITORY/actions/runs --jq '.workflow_runs[] | select(.name | contains("Build") and .status == "completed") | .id' | head -1)
+          echo "Selected RUN_ID: $RUN_ID"
+          if [ -z "$RUN_ID" ]; then
+            echo "No successful Build run found."
+            exit 1
+          fi
           echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
 
       - name: Download build artifacts
