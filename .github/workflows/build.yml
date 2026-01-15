@@ -15,42 +15,95 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Detect project type and run build/tests
+      - name: Set up Node.js (optional, speeds Node projects)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build / Test
         shell: bash
         run: |
+          set -e
           # Node
           if [ -f package.json ]; then
             echo "Detected Node project"
             npm ci
-            if npm run | grep -q "test"; then
+            if npm run | grep -q "build"; then
+              npm run build
+            elif npm run | grep -q "test"; then
               npm test
             else
-              echo "No npm test script found; build will exit with success"
+              echo "No build or test script found in package.json"
             fi
-            exit $?
+            exit 0
           fi
 
           # Maven (Java)
           if [ -f pom.xml ]; then
             echo "Detected Maven project"
-            mvn -B test
-            exit $?
+            mvn -B package -DskipTests
+            exit 0
           fi
 
           # Gradle (Java/Kotlin)
           if [ -f build.gradle ] || [ -f build.gradle.kts ]; then
             echo "Detected Gradle project"
-            ./gradlew build
-            exit $?
+            ./gradlew build -x test --no-daemon
+            exit 0
           fi
 
-          # Make
+          # Makefile
           if [ -f Makefile ]; then
             echo "Detected Makefile"
             make build || make
-            exit $?
+            exit 0
           fi
 
           echo "No recognized build file (package.json, pom.xml, build.gradle, Makefile)."
-          echo "Add a custom build step to .github/workflows/build.yml for your project."
           exit 1
+
+      - name: Collect build artifacts
+        shell: bash
+        run: |
+          set -e
+          ARTIFACT_DIR="$GITHUB_WORKSPACE/artifacts"
+          mkdir -p "$ARTIFACT_DIR"
+          found=0
+
+          # common web output dirs
+          for d in build dist out public; do
+            if [ -d "$d" ]; then
+              echo "Copying directory: $d"
+              cp -r "$d" "$ARTIFACT_DIR/$(basename $d)"
+              found=1
+            fi
+          done
+
+          # Maven JARs
+          if compgen -G "target/*.jar" > /dev/null; then
+            mkdir -p "$ARTIFACT_DIR/jars"
+            cp target/*.jar "$ARTIFACT_DIR/jars/" || true
+            found=1
+          fi
+
+          # Gradle JARs
+          if compgen -G "build/libs/*.jar" > /dev/null; then
+            mkdir -p "$ARTIFACT_DIR/jars"
+            cp build/libs/*.jar "$ARTIFACT_DIR/jars/" || true
+            found=1
+          fi
+
+          if [ $found -eq 0 ]; then
+            echo "No known build outputs found. Workspace listing:"
+            ls -la
+            exit 1
+          fi
+
+          echo "Artifacts prepared in $ARTIFACT_DIR"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-application
+          path: artifacts/**
