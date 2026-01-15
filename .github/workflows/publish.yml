@@ -34,7 +34,12 @@ jobs:
           name: web-application-ubuntu-latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
-          path: ./dist
+          path: ./artifacts
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p ./deploy
+          cp -r ./artifacts/dist/* ./deploy/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -42,7 +47,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: './deploy'
 
       - name: Deploy to GitHub Pages
         id: deployment
