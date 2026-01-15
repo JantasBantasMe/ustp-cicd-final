@@ -10,7 +10,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,10 +34,6 @@ jobs:
             npm ci
             if npm run | grep -q "build"; then
               npm run build
-            elif npm run | grep -q "test"; then
-              npm test
-            else
-              echo "No build or test script found in package.json"
             fi
             exit 0
           fi
@@ -62,6 +61,26 @@ jobs:
 
           echo "No recognized build file (package.json, pom.xml, build.gradle, Makefile)."
           exit 1
+
+      - name: Run Tests
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            if npm run | grep -q "test:run"; then
+              npx vitest run --coverage
+            fi
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            test-results/
+            *.xml
+            *.json
+        continue-on-error: true
 
       - name: Collect build artifacts
         shell: bash
@@ -105,5 +124,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: web-application
+          name: web-application-${{ matrix.os }}
           path: artifacts/**
