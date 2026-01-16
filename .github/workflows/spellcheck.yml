@@ -13,18 +13,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run spell checker (check-spelling/action)
-        uses: check-spelling/action@v0
+      - name: Check spelling (check-spelling)
+        # Korrekte Repository-Referenz:
+        uses: check-spelling/check-spelling@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Nur Markdown-Dateien prüfen
           files: |
             **/*.md
-
-      # Falls die Action nicht automatisch non-zero exit liefert, sorgt dieser Schritt dafür,
-      # dass der Job mit Fehler beendet wird, wenn vorherige Schritte fehlschlugen.
-      - name: Fail on spelling errors
-        if: failure()
-        run: |
-          echo "Spelling errors found — failing the job."
-          exit 1
