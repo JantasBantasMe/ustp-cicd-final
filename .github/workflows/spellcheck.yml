@@ -1,0 +1,30 @@
+name: "Spellcheck Markdown"
+
+on:
+  pull_request:
+
+jobs:
+  spellcheck:
+    name: Spellcheck Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run spell checker (check-spelling/action)
+        uses: check-spelling/action@v0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Nur Markdown-Dateien prüfen
+          files: |
+            **/*.md
+
+      # Falls die Action nicht automatisch non-zero exit liefert, sorgt dieser Schritt dafür,
+      # dass der Job mit Fehler beendet wird, wenn vorherige Schritte fehlschlugen.
+      - name: Fail on spelling errors
+        if: failure()
+        run: |
+          echo "Spelling errors found — failing the job."
+          exit 1
