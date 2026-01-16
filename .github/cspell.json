@@ -1,0 +1,46 @@
+{
+  "version": "0.2",
+  "language": "en,de",
+  "dictionaries": [
+    "de-de",
+    "html",
+    "css",
+    "typescript",
+    "npm",
+    "softwareTerms",
+    "project-words"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./wordlists/technical-terms.txt",
+      "addWords": true
+    }
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".git/**",
+    "package-lock.json",
+    "test-results/**",
+    "coverage/**"
+  ],
+  "words": [
+    "vscode",
+    "TypeScript",
+    "vite",
+    "vitest",
+    "GitHub",
+    "npm",
+    "React",
+    "Radix",
+    "Tailwind",
+    "tailwindcss",
+    "cicd",
+    "USTP",
+    "ustp",
+    "Tetris",
+    "tetris"
+  ]
+}
