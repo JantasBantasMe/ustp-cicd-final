@@ -1,0 +1,52 @@
+version: 2
+updates:
+  # npm Dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 1
+    # Gruppierung von Abhängigkeiten für übersichtlichere PRs
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "*eslint*"
+          - "*prettier*"
+          - "vite*"
+          - "typescript*"
+          - "vitest*"
+      dev-and-build:
+        patterns:
+          - "@types/*"
+          - "*eslint*"
+          - "*prettier*"
+          - "vite*"
+          - "typescript*"
+          - "vitest*"
+    # Commit-Nachricht konfigurieren
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+      include: "scope"
+    # Abhängigkeits-Updates mit Rebase aktualisieren
+    rebase-strategy: "auto"
+    # Auto-merge für Patch/Minor Updates (optional, je nach Projekt-Policy)
+    # allow:
+    #   - dependency-type: "indirect"
+
+  # GitHub Actions selbst aktualisieren
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: "ci(github-actions)"
+    rebase-strategy: "auto"
