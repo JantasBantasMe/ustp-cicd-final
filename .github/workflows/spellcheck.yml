@@ -2,6 +2,7 @@ name: "Spellcheck Markdown"
 
 on:
   pull_request:
+    # Immer triggern bei PRs, unabhängig von geänderten Dateien
 
 jobs:
   spellcheck:
@@ -10,22 +11,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Check spelling (check-spelling)
-        # Korrekte Repository-Referenz:
-        uses: check-spelling/check-spelling@main
+      - name: Check spelling with cspell
+        uses: streetsidesoftware/cspell-action@v6
         with:
-          extra_dictionaries: |
-            cspell:de-de/dict/de-de.txt
-            cspell:html/dict/html.txt
-            cspell:npm/dict/npm.txt
-            cspell:software-terms/dict/softwareTerms.txt
-            cspell:typescript/dict/typescript.txt
-            cspell:css/dict/css.txt
-            .github/wordlists/technical-terms.txt
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Nur Markdown-Dateien prüfen
-          files: |
-            **/*.md
+          files: "**/*.md"
+          config: ".github/cspell.json"
+          incremental_files_only: false
