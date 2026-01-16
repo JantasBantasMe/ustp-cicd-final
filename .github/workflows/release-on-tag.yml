@@ -1,0 +1,57 @@
+name: Release on Tag (vX.X.X)
+
+# Trigger nur bei Tag pushes, einfache Glob für SemVer-ähnliche Tags
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+# Rechte: wir benötigen Schreibrechte auf contents um Releases/Assets zu erstellen
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    # Nur Tags triggern das Job-Run
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node (falls nötig)
+        # Entferne oder passe an, wenn es kein Node-Projekt ist
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install & Build
+        # Passe diesen Schritt an dein Projekt an (z. B. mvn package, dotnet publish, make, etc.)
+        run: |
+          npm ci
+          npm run build
+          # Beispiel: Erzeuge ein Verpackungsverzeichnis, z.B. dist/
+          ls -al
+
+      - name: Package artifacts
+        # Packe alles, das als Release‑Asset hochgeladen werden soll, in eine zip
+        run: |
+          mkdir -p release
+          # Passe den Pfad zu deinen Build-Artefakten an (z.B. dist/*)
+          zip -r release/ustp-cicd-tetris-${GITHUB_REF_NAME}.zip dist || true
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
+      - name: Create GitHub Release with Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: USTP CI/CD Tetris ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release/ustp-cicd-tetris-${{ github.ref_name }}.zip
