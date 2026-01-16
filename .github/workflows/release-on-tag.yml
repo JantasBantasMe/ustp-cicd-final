@@ -21,12 +21,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node (falls nötig)
+      - name: Set up Node
         # Entferne oder passe an, wenn es kein Node-Projekt ist
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install & Build
         # Passe diesen Schritt an dein Projekt an (z. B. mvn package, dotnet publish, make, etc.)
